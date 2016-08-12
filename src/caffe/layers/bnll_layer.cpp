@@ -5,7 +5,7 @@
 
 namespace caffe {
 
-const float kBNLL_THRESHOLD = 50.;
+//const float kBNLL_THRESHOLD = 50.;
 
 template <typename Dtype>
 void BNLLLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,

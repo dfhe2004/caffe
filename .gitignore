@@ -5,6 +5,7 @@
 *.lo
 *.o
 *.cuo
+*.ilk
 
 # Compiled Dynamic libraries
 *.so
@@ -60,6 +61,15 @@ Makefile.config
 # 2. custom, and live on their own unless they're deliberated contributed
 data/*
 models/*
+3rdparty/*
+python/caffe.egg-info/*
+*.pyd
+*.exe
+*.h5
+*.dll
+*.lib
+*.pdb
+*.exp
 *.caffemodel
 *.caffemodel.h5
 *.solverstate

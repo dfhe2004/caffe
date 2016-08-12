@@ -2,6 +2,7 @@
 
 #include "caffe/layers/exp_layer.hpp"
 #include "caffe/util/math_functions.hpp"
+#include "caffe/wincompat.h"
 
 namespace caffe {
 
