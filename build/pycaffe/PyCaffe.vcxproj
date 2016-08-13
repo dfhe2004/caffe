@@ -119,6 +119,7 @@
     <ClCompile Include="..\..\src\ex\layers\interp_layer.cpp" />
     <ClCompile Include="..\..\src\ex\layers\roi_pooling_layer.cpp" />
     <ClCompile Include="..\..\src\ex\layers\smooth_L1_loss_layer.cpp" />
+    <ClCompile Include="..\..\src\ex\util\interp.cpp" />
     <ClCompile Include="..\..\src\ex\wincompat.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -187,6 +188,7 @@
     <CudaCompile Include="..\..\src\caffe\util\math_functions.cu" />
     <CudaCompile Include="..\..\src\ex\layers\roi_pooling_layer.cu" />
     <CudaCompile Include="..\..\src\ex\layers\smooth_L1_loss_layer.cu" />
+    <CudaCompile Include="..\..\src\ex\util\interp.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>PyCaffe</ProjectName>
