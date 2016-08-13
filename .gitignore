@@ -61,7 +61,6 @@ Makefile.config
 # 2. custom, and live on their own unless they're deliberated contributed
 data/*
 models/*
-3rdparty/*
 python/caffe.egg-info/*
 *.pyd
 *.exe
@@ -79,7 +78,12 @@ python/caffe.egg-info/*
 *lmdb
 
 # build, distribute, and bins (+ python proto bindings)
-build
+build/src
+build/pycaffe/Release
+build/pycaffe/Debug
+*.sdf
+*.opensdf
+*.suo
 .build_debug/*
 .build_release/*
 distribute/*
