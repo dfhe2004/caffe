@@ -12,7 +12,7 @@
 #include "caffe/caffe.hpp"
 #include "caffe/parallel.hpp"
 
-#include "caffe/wincompat.h"
+#include "ex/wincompat.h"
 
 namespace caffe {
 

@@ -3,6 +3,13 @@ Wrap the internal caffe C++ module (_caffe.so) with a clean, Pythonic
 interface.
 """
 
+import os
+#_path = os.path.abspath(__file__)
+#_path = os.path.dirname(_path)
+os.environ['PATH'] = r'%s\bin;%s'%tuple(os.environ[e] for e in ('Cxx3rd_Party', 'PATH'))
+
+import logging
+import cPickle
 from collections import OrderedDict
 try:
     from itertools import izip_longest
@@ -318,6 +325,61 @@ def _Net_get_id_name(func, field):
         return getattr(self, field)
     return get_id_name
 
+def _copy_from_arr(self, src, strict=True, skips=None):
+    srcLayers = dict([ (e['name'],i) for i,e in enumerate(src) ])
+    
+    for i, kLayer in enumerate(self._layer_names):
+        if bool(skips) and kLayer in skips:
+            logging.debug('skip layer(%s) from model'%kLayer)
+            continue
+
+        numBlobs = len(self.layers[i].blobs)
+        if numBlobs==0: continue
+        if not srcLayers.has_key(kLayer):    
+            logging.debug('ignore layer(%s) from model'%kLayer)
+            continue
+        src_blobs  = src[srcLayers[kLayer]]['blobs']
+        dest_blobs = self.layers[i].blobs
+        assert numBlobs==len(src_blobs), 'layer<%s>: ( %s vs. %s ) blobs size should be same!'%(numBlobs, len(src_blobs))
+        
+        for t,e in enumerate(dest_blobs):
+            logging.debug('copying from %s::%s shape|%s'%(kLayer,t, e.data.shape,))
+            src_blob = src_blobs[t] 
+            for k,v in src_blob.items():
+                if k=='shape':  continue
+                
+                _dest = getattr(e,k)
+                if (_dest.size!=v.size) or (strict and (_dest.shape!=v.shape)):
+                    logging.warning('layer|%s, (%s vs %s) blob shape should be same!'%(
+                        self._layer_names[i], _dest.shape, v.shape
+                    ))
+                    continue
+
+                v = v.astype(_dest.dtype)
+                v = v.reshape(_dest.shape)
+                _dest[...] = v.astype(_dest.dtype)
+
+        src_blobs = None
+    src = None
+
+
+def _Net_py_copy_from(self,model_name, strict=True, skips=None):
+    fname, fext = os.path.splitext(model_name)
+    if fext.lower()=='.bin':
+        src = cPickle.load(open(model_name, 'rb'))        
+        _copy_from_arr(self,src, strict,skips)
+        return
+    
+    if fext.lower()=='.h5':
+        src = caffe.io.arr_from_h5(model_name)         
+        _copy_from_arr(self,src,strict,skips)
+        return        
+    
+    #assert fext==model_name
+    src = caffe.io.arr_from_caffemodel(model_name)
+    _copy_from_arr(self,src,strict,skips)
+    
+
 # Attach methods to Net.
 Net.blobs = _Net_blobs
 Net.blob_loss_weights = _Net_blob_loss_weights
@@ -332,3 +394,4 @@ Net.inputs = _Net_inputs
 Net.outputs = _Net_outputs
 Net.top_names = _Net_get_id_name(Net._top_ids, "_top_names")
 Net.bottom_names = _Net_get_id_name(Net._bottom_ids, "_bottom_names")
+Net.py_copy_from = _Net_py_copy_from

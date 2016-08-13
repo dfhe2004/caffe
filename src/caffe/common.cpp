@@ -6,7 +6,7 @@
 
 #include "caffe/common.hpp"
 #include "caffe/util/rng.hpp"
-#include "caffe/wincompat.h"
+#include "ex/wincompat.h"
 
 namespace caffe {
 

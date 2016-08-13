@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "caffe/layers/bnll_layer.hpp"
-#include "caffe/wincompat.h"
+#include "ex/wincompat.h"
 
 namespace caffe {
 

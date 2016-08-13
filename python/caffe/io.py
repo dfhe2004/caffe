@@ -381,3 +381,86 @@ def oversample(images, crop_dims):
             ix += 1
         crops[ix-5:ix] = crops[ix-5:ix, :, ::-1, :]  # flip for mirrors
     return crops
+
+
+def arr_from_caffemodel(fname):
+    with open(fname, 'rb') as fh:
+        src = caffe_pb2.NetParameter.FromString(fh.read())
+    
+    rs = []
+    kk = 'double_data,double_diff,data,diff'.split(',')
+    _layers = src.layer if len(src.layer)>0 else src.layers # some old version use "layers", the new version use "layer" 
+    print("... load layers|%s"%len(_layers))
+    
+    #from IPython import embed; embed()
+    for src_layer in _layers:
+        e = {'name': str(src_layer.name), 'blobs': []}
+
+        for src_blob in src_layer.blobs:
+            b = {'shape': list(src_blob.shape.dim),}
+            for k in kk:
+                if len(getattr(src_blob,k))==0: continue
+                _data = np.asarray(getattr(src_blob,k)) 
+                if b['shape']!=[]:
+                    _data = _data.reshape(b['shape'])
+                b[k] = _data
+                b['shape'] = _data.shape              # sometime the shape is [], we should adjust it to 1xn
+            e['blobs'].append(b)     
+            
+        if not e['blobs'] : continue
+
+        rs.append(e)
+    return rs
+
+
+def arr_from_h5(fname):
+    import tables
+    
+    kk = 'double_data,double_diff,data,diff'.split(',')
+    key = 'L%s_B%s_K%s'
+    with tables.open_file(fname, mode='r') as h5f:
+        _net = h5f.root._v_attrs.net
+        
+        for i, _layer in enumerate(_net):
+            for j, _blob in enumerate(_layer['blobs']):
+                for k in kk:
+                    if _blob.get(k,None) is None:   continue
+                    
+                    _tname = key%(i,j,k)
+                    _vals = h5f.get_node('/%s'%_tname).read()
+                    _blob[k] = _vals
+    return _net                
+
+
+
+def arr_to_h5(src, fname):
+    import tables
+    _H5Zipper   = tables.Filters(complevel=5, complib='zlib')
+
+    _net  = []
+    kk = 'double_data,double_diff,data,diff'.split(',')
+    for  e in src:       # remove data
+        _layer  = {'name': e['name'], 'blobs': [] }
+        for  b in e['blobs']:
+            _blob = {'shape': b['shape'],}
+            for k in kk:
+                if b.get(k,None) is None:   continue
+                _blob[k] = True
+            _layer['blobs'].append(_blob)
+        _net.append(_layer)
+
+    key = 'L%s_B%s_K%s'
+    with tables.open_file(fname, mode='w') as h5f:
+        for i, _layer in enumerate(_net):
+            for j, _blob in enumerate(_layer['blobs']):
+                for k in kk:
+                    if _blob.get(k,None) is None:   continue
+                    
+                    _tname = key%(i,j,k)
+                    _vals = src[i]['blobs'][j][k]
+                    tArr = h5f.create_carray('/', _tname, tables.Atom.from_dtype(_vals.dtype), _vals.shape, filters=_H5Zipper )
+                    tArr[...] = _vals
+
+        h5f.root._v_attrs.net = _net
+        h5f.flush()
+
